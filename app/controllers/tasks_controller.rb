@@ -2,9 +2,7 @@ class TasksController < ApplicationController
 
   # GET /tasks
   def index
-
     render json: Task.all
-
   end
 
   # GET /tasks/:id
@@ -17,19 +15,13 @@ class TasksController < ApplicationController
 
   # POST /tasks
   def create
-
     task = Task.new(task_params)
 
     if task.save
-
       render json: task
-
     else
-
       render json: { error: 'Failed to create task' }, status: :unprocessable_entity
-
     end
-
   end
 
   # PATCH/PUT /tasks/:id
@@ -41,7 +33,6 @@ class TasksController < ApplicationController
     else
       render json: { error: 'Failed to update task' }, status: :unprocessable_entity
     end
-
   rescue ActiveRecord::RecordNotFound
     render json: { error: 'Task not found' }, status: :not_found
   end
@@ -57,9 +48,7 @@ class TasksController < ApplicationController
   private
 
   def task_params
-
-    params.require(:task).permit(:title, :completed)
-
+    params.require(:task).permit(:title, :description, :completed)
   end
 
 end

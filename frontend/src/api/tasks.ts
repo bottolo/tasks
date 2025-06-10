@@ -52,17 +52,20 @@ export const useCreateTask = () => {
 			}
 			return response.json();
 		},
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+		},
 		onError: (error) => {
 			console.error("Error creating task:", error);
 		},
 	});
 };
 
-export const useUpdateTask = (id: string) => {
+export const useUpdateTask = () => {
 	return useMutation({
-		mutationKey: ["updateTask", id],
-		mutationFn: async (task: Partial<Task>) => {
-			const response = await fetch(`http://localhost:3000/tasks/${id}`, {
+		mutationKey: ["updateTask"],
+		mutationFn: async (task: Omit<Task, "createdAt">) => {
+			const response = await fetch(`http://localhost:3000/tasks/${task.id}`, {
 				method: "PUT",
 				headers: {
 					"Content-Type": "application/json",
@@ -74,10 +77,13 @@ export const useUpdateTask = (id: string) => {
 			}
 			return response.json();
 		},
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+			await queryClient.invalidateQueries({ queryKey: ["task"] });
+		},
 		onError: (error) => {
 			console.error("Error updating task:", error);
 		},
-		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tasks"] }),
 	});
 };
 
@@ -91,11 +97,13 @@ export const useDeleteTask = () => {
 			if (!response.ok) {
 				throw new Error("Network response was not ok");
 			}
-			return response.json();
+			return id;
+		},
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: ["tasks"] });
 		},
 		onError: (error) => {
 			console.error("Error deleting task:", error);
 		},
-		onSuccess: () => queryClient.invalidateQueries({ queryKey: ["tasks"] }),
 	});
 };
