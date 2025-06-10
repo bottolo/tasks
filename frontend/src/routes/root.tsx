@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button.tsx";
+import { Checkbox } from "@/components/ui/checkbox.tsx";
 import {
 	Dialog,
 	DialogContent,
@@ -13,8 +14,16 @@ import {
 	FormLabel,
 	FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input.tsx";
+import { Textarea } from "@/components/ui/textarea.tsx";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Loader2Icon } from "lucide-react";
+import {
+	ListCheckIcon,
+	Loader2Icon,
+	PencilIcon,
+	PlusIcon,
+	Trash2Icon,
+} from "lucide-react";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useCreateTask, useDeleteTask, useGetTasks } from "../api/tasks.ts";
@@ -48,14 +57,27 @@ export const Root = () => {
 	return (
 		<div className="flex flex-col h-full gap-4">
 			<div className={"flex flex-row justify-between"}>
-				<div className={"flex flex-row gap-2"}>
-					<Button>Select All</Button>
-					<Button variant={"destructive"}>Delete</Button>
+				<div className={"flex flex-row"}>
+					<Button
+						className={"rounded-r-none"}
+						onClick={() => setSelectedTasks(tasks || [])}
+					>
+						<ListCheckIcon /> Select All
+					</Button>
+					<Button
+						className={"rounded-l-none"}
+						disabled={selectedTasks.length === 0}
+						variant={"destructive"}
+					>
+						<Trash2Icon />
+					</Button>
 				</div>
 
 				<Dialog>
 					<DialogTrigger>
-						<Button>+ New Task</Button>
+						<Button>
+							<PlusIcon /> Add Task
+						</Button>
 					</DialogTrigger>
 					<DialogContent>
 						<Form {...form}>
@@ -70,7 +92,7 @@ export const Root = () => {
 										<FormItem>
 											<FormLabel>Title</FormLabel>
 											<FormControl>
-												<input type="text" {...field} className="input" />
+												<Input type="text" {...field} className="input" />
 											</FormControl>
 											<FormDescription>The title of the task.</FormDescription>
 											<FormMessage />
@@ -85,7 +107,7 @@ export const Root = () => {
 										<FormItem>
 											<FormLabel>Description</FormLabel>
 											<FormControl>
-												<textarea rows={3} {...field} className="input" />
+												<Textarea rows={3} {...field} className="input" />
 											</FormControl>
 											<FormDescription>
 												A brief description of the task.
@@ -100,11 +122,10 @@ export const Root = () => {
 									name="completed"
 									render={({ field }) => (
 										<FormItem className="flex items-center">
-											<input
-												type="checkbox"
-												className="checkbox"
-												onChange={(e) => field.onChange(e.target.checked)}
-												defaultChecked={field.value}
+											<Checkbox
+												checked={field.value}
+												onCheckedChange={(checked) => field.onChange(checked)}
+												className="h-4 w-4"
 											/>
 											<FormLabel className="ml-2">Task Completed</FormLabel>
 										</FormItem>
@@ -112,6 +133,7 @@ export const Root = () => {
 								/>
 
 								<Button type="submit" disabled={isCreating}>
+									<PlusIcon />
 									{isCreating ? (
 										<Loader2Icon className={"animate-spin"} />
 									) : (
@@ -123,16 +145,24 @@ export const Root = () => {
 					</DialogContent>
 				</Dialog>
 			</div>
-			{tasks?.map((task: Task, index) => (
+			{tasks?.map((task: Task) => (
 				<Card
-					className={"flex flex-row justify-between items-center"}
-					key={index}
+					className={"flex flex-row justify-between items-center px-4"}
+					key={task?.id}
 				>
-					<div className={"flex flex-row gap-4"}>
-						<input
-							type={"checkbox"}
-							className={"cursor-pointer mb-auto"}
-							readOnly
+					<div className={"flex flex-row gap-4 items-center"}>
+						<Checkbox
+							checked={selectedTasks.includes(task)}
+							onCheckedChange={(checked) => {
+								if (checked) {
+									setSelectedTasks((prev) => [...prev, task]);
+								} else {
+									setSelectedTasks((prev) =>
+										prev.filter((t) => t.id !== task.id),
+									);
+								}
+							}}
+							className="h-4 w-4"
 						/>
 						<div>
 							<h3 className="text-lg font-semibold">{task.title}</h3>
@@ -141,11 +171,22 @@ export const Root = () => {
 						</div>
 					</div>
 
-					<div className={"flex flex-row gap-2"}>
-						<Button onClick={() => deleteTask(task.id)}>
-							{isDeleting ? "Deleting..." : "Delete"}
+					<div className={"flex flex-row"}>
+						{" "}
+						<Button className={"rounded-r-none"}>
+							<PencilIcon />
 						</Button>
-						<Button>Update</Button>
+						<Button
+							className={"rounded-l-none"}
+							variant={"destructive"}
+							onClick={() => deleteTask(task.id)}
+						>
+							{isDeleting ? (
+								<Loader2Icon className={"animate-spin"} />
+							) : (
+								<Trash2Icon />
+							)}
+						</Button>
 					</div>
 				</Card>
 			))}
