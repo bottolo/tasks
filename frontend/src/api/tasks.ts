@@ -3,11 +3,26 @@ import { toast } from "sonner";
 import { queryClient } from "../lib/queryClient.ts";
 import type { Task } from "../types/task.ts";
 
-export const useGetTasks = () => {
+export interface UseGetTasksParams {
+	search?: string;
+	completed?: boolean;
+}
+
+export const useGetTasks = (params?: UseGetTasksParams) => {
 	return useQuery<Task[]>({
-		queryKey: ["tasks"],
+		queryKey: ["tasks", params],
 		queryFn: async () => {
-			const response = await fetch("http://localhost:3000/tasks");
+			const url = new URL("http://localhost:3000/tasks");
+
+			if (params?.search) {
+				url.searchParams.append("search", params.search);
+			}
+
+			if (params?.completed !== undefined) {
+				url.searchParams.append("completed", params.completed.toString());
+			}
+
+			const response = await fetch(url.toString());
 			if (!response.ok) {
 				throw new Error("Network response was not ok");
 			}
