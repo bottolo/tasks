@@ -2,10 +2,6 @@ require "test_helper"
 
 # = TasksController Test Suite
 #
-# This comprehensive test suite validates the TasksController's REST API endpoints,
-# HTTP status codes, error handling, and JSON response formatting. The controller
-# provides a full CRUD interface for Task resources with proper error handling.
-#
 # == API Endpoints Tested:
 # * GET    /tasks       - Index (list all tasks)
 # * GET    /tasks/:id   - Show (display specific task)
@@ -67,13 +63,6 @@ require "test_helper"
 # * Data Integrity - Verify database changes and rollbacks
 # * API Contract Testing - Consistent response formats and headers
 #
-# == Dependencies:
-# * Rails Integration Test framework (ActionDispatch::IntegrationTest)
-# * Task model with proper validations
-# * TasksController with all CRUD actions implemented
-# * Test database with tasks table
-# * JSON parsing capabilities
-#
 # == Setup and Fixtures:
 # * @task - Pre-created valid task for testing operations
 # * @valid_params - Valid task parameters for successful operations
@@ -88,13 +77,6 @@ require "test_helper"
 # * Error message clarity for client consumption
 # * Database transaction handling
 #
-# == Notes:
-# * Tests use ActionDispatch::IntegrationTest for full HTTP stack testing
-# * JSON responses are parsed and validated for structure and content
-# * Database state is verified through assertions and record counts
-# * Error messages are tested to ensure proper client feedback
-# * Tests cover both Rails-generated and custom error scenarios
-
 class TasksControllerTest < ActionDispatch::IntegrationTest
   def setup
     @task = Task.create!(
