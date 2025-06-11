@@ -66,6 +66,7 @@ export const EditTaskRoute = () => {
 					variant="outline"
 					onClick={() => navigate("/")}
 					className="flex items-center gap-2"
+					size={"sm"}
 				>
 					<ArrowLeftIcon className="h-4 w-4" />
 					Return
@@ -75,6 +76,7 @@ export const EditTaskRoute = () => {
 					type="submit"
 					disabled={isUpdating}
 					className="flex items-center gap-2"
+					size={"sm"}
 				>
 					{isUpdating ? (
 						<Loader2Icon className="animate-spin" />
@@ -142,11 +144,7 @@ export const EditTaskRoute = () => {
 										onCheckedChange={field.onChange}
 									/>
 								</FormControl>
-								<div className="space-y-1 leading-none">
-									<FormLabel className="cursor-pointer">
-										Mark as completed
-									</FormLabel>
-								</div>
+								<FormLabel className="cursor-pointer">Task Completed</FormLabel>
 							</FormItem>
 						)}
 					/>

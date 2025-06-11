@@ -1,7 +1,7 @@
 # = TasksController
 #
 # == API Endpoints:
-#   GET    /tasks       # List all tasks
+#   GET    /tasks       # List all tasks (with optional filtering)
 #   GET    /tasks/:id   # Show specific task
 #   POST   /tasks       # Create new task
 #   PATCH  /tasks/:id   # Update existing task (PATCH preferred)
@@ -21,6 +21,10 @@
 # === URL Parameters:
 #   :id - Integer, the task ID for show/update/destroy operations
 #
+# === Query Parameters (GET /tasks):
+#   completed: Boolean   # Filter by completion status (true/false)
+#   search: String       # Search tasks by title (case-insensitive)
+#
 # == Validations:
 # The controller relies on the Task model for validation:
 # * Title: Required, must be 1-255 characters
@@ -35,6 +39,21 @@
 # 4. StandardError - Returns 500 for unexpected server errors
 #
 # == Usage Examples:
+#   # Get all tasks
+#   GET /tasks
+#
+#   # Get only completed tasks
+#   GET /tasks?completed=true
+#
+#   # Get only incomplete tasks
+#   GET /tasks?completed=false
+#
+#   # Search for tasks with "job" in the title
+#   GET /tasks?search=job
+#
+#   # Combine filters: incomplete tasks with "rails" in title
+#   GET /tasks?completed=false&search=rails
+#
 #   # Create a new task
 #   POST /tasks
 #   Content-Type: application/json
@@ -60,6 +79,17 @@ class TasksController < ApplicationController
 
   def index
     tasks = Task.all
+
+    if params[:completed].present?
+      completed_value = ActiveModel::Type::Boolean.new.cast(params[:completed])
+      tasks = tasks.where(completed: completed_value)
+    end
+
+    if params[:search].present?
+      search_term = "%#{params[:search].downcase}%"
+      tasks = tasks.where("LOWER(title) LIKE ?", search_term)
+    end
+
     render json: tasks, status: :ok
   rescue StandardError => e
     render json: { error: 'Unable to fetch tasks', details: e.message }, status: :internal_server_error

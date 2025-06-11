@@ -3,11 +3,16 @@ require "test_helper"
 # = TasksController Test Suite
 #
 # == API Endpoints Tested:
-# * GET    /tasks       - Index (list all tasks)
+# * GET    /tasks       - Index (list all tasks with optional filtering)
 # * GET    /tasks/:id   - Show (display specific task)
 # * POST   /tasks       - Create (create new task)
 # * PATCH  /tasks/:id   - Update (modify existing task)
 # * DELETE /tasks/:id   - Destroy (delete task)
+#
+# == Filtering Features Tested:
+# * GET /tasks?completed=true/false  - Filter by completion status
+# * GET /tasks?search=keyword        - Search by title (case-insensitive)
+# * GET /tasks?completed=X&search=Y  - Combined filtering
 #
 # == HTTP Status Codes Validated:
 # * 200 OK              - Successful GET/PATCH requests
@@ -27,6 +32,7 @@ require "test_helper"
 #
 # == Test Categories:
 # * Index Tests - GET /tasks endpoint behavior
+# * Filtering Tests - Query parameter filtering functionality
 # * Show Tests - GET /tasks/:id with valid/invalid IDs
 # * Create Tests - POST /tasks with valid/invalid data
 # * Update Tests - PATCH /tasks/:id with various scenarios
@@ -34,12 +40,6 @@ require "test_helper"
 # * Integration Tests - Complete CRUD workflows
 # * Validation Tests - Model validation through API
 # * Edge Cases - Empty lists, partial updates, data types
-#
-# == JSON Response Format Validation:
-# * Proper Content-Type headers (application/json)
-# * Consistent error response structure: { error: "message", details: ["array"] }
-# * Data type preservation (integers, strings, booleans)
-# * Complete resource representation in responses
 #
 # == Running Tests:
 #   # Run all controller tests
@@ -54,17 +54,12 @@ require "test_helper"
 #   # Run specific test categories (using grep)
 #   rails test test/controllers/tasks_controller_test.rb -n /create/
 #   rails test test/controllers/tasks_controller_test.rb -n /validation/
-#
-# == Testing Strategy:
-# * Happy Path Testing - Verify successful operations work correctly
-# * Error Path Testing - Ensure proper error handling and status codes
-# * Boundary Testing - Test validation limits and edge cases
-# * Integration Testing - Full CRUD workflows and state verification
-# * Data Integrity - Verify database changes and rollbacks
-# * API Contract Testing - Consistent response formats and headers
-#
+#   rails test test/controllers/tasks_controller_test.rb -n /filter/
+
 # == Setup and Fixtures:
 # * @task - Pre-created valid task for testing operations
+# * @completed_task - Pre-created completed task for filter testing
+# * @incomplete_task - Pre-created incomplete task for filter testing
 # * @valid_params - Valid task parameters for successful operations
 # * @invalid_params - Invalid parameters to test validation failures
 #
@@ -76,6 +71,7 @@ require "test_helper"
 # * Resource state management (creation, updates, deletion)
 # * Error message clarity for client consumption
 # * Database transaction handling
+# * Query parameter filtering and search functionality
 #
 class TasksControllerTest < ActionDispatch::IntegrationTest
   def setup
@@ -84,6 +80,19 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
       description: "A test task description",
       completed: false
     )
+
+    @completed_task = Task.create!(
+      title: "Completed Rails Task",
+      description: "A completed task about Rails development",
+      completed: true
+    )
+
+    @incomplete_task = Task.create!(
+      title: "Incomplete Python Task",
+      description: "An incomplete task about Python development",
+      completed: false
+    )
+
     @valid_params = {
       task: {
         title: "New Task",
@@ -110,7 +119,151 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
     assert json_response.size >= 1
   end
 
-  # SHOW TESTS
+  test "should filter tasks by completed status true" do
+    get tasks_path, params: { completed: true }
+    assert_response :ok
+
+    json_response = JSON.parse(response.body)
+    assert_kind_of Array, json_response
+
+    json_response.each do |task|
+      assert_equal true, task["completed"]
+    end
+
+    assert json_response.any? { |task| task["id"] == @completed_task.id }
+    assert_not json_response.any? { |task| task["id"] == @incomplete_task.id }
+  end
+
+  test "should filter tasks by completed status false" do
+    get tasks_path, params: { completed: false }
+    assert_response :ok
+
+    json_response = JSON.parse(response.body)
+    assert_kind_of Array, json_response
+
+    json_response.each do |task|
+      assert_equal false, task["completed"]
+    end
+
+    assert json_response.any? { |task| task["id"] == @incomplete_task.id }
+    assert json_response.any? { |task| task["id"] == @task.id }
+    assert_not json_response.any? { |task| task["id"] == @completed_task.id }
+  end
+
+  test "should search tasks by title case insensitive" do
+    get tasks_path, params: { search: "rails" }
+    assert_response :ok
+
+    json_response = JSON.parse(response.body)
+    assert_kind_of Array, json_response
+
+    assert json_response.any? { |task| task["id"] == @completed_task.id }
+    assert_not json_response.any? { |task| task["id"] == @incomplete_task.id }
+  end
+
+  test "should search tasks by title with uppercase" do
+    get tasks_path, params: { search: "PYTHON" }
+    assert_response :ok
+
+    json_response = JSON.parse(response.body)
+
+    assert json_response.any? { |task| task["id"] == @incomplete_task.id }
+  end
+
+  test "should search tasks by partial title match" do
+    get tasks_path, params: { search: "Task" }
+    assert_response :ok
+
+    json_response = JSON.parse(response.body)
+
+    assert json_response.size >= 3
+    assert json_response.any? { |task| task["id"] == @task.id }
+    assert json_response.any? { |task| task["id"] == @completed_task.id }
+    assert json_response.any? { |task| task["id"] == @incomplete_task.id }
+  end
+
+  test "should combine completed filter and search" do
+    get tasks_path, params: { completed: true, search: "rails" }
+    assert_response :ok
+
+    json_response = JSON.parse(response.body)
+
+    json_response.each do |task|
+      assert_equal true, task["completed"]
+      assert task["title"].downcase.include?("rails")
+    end
+
+    assert json_response.any? { |task| task["id"] == @completed_task.id }
+  end
+
+  test "should combine incomplete filter and search" do
+    get tasks_path, params: { completed: false, search: "python" }
+    assert_response :ok
+
+    json_response = JSON.parse(response.body)
+
+    json_response.each do |task|
+      assert_equal false, task["completed"]
+      assert task["title"].downcase.include?("python")
+    end
+
+    assert json_response.any? { |task| task["id"] == @incomplete_task.id }
+  end
+
+  test "should return empty array when no tasks match filters" do
+    get tasks_path, params: { completed: true, search: "nonexistent" }
+    assert_response :ok
+
+    json_response = JSON.parse(response.body)
+    assert_equal [], json_response
+  end
+
+  test "should return empty array when no tasks match search" do
+    get tasks_path, params: { search: "nonexistentKeyword" }
+    assert_response :ok
+
+    json_response = JSON.parse(response.body)
+    assert_equal [], json_response
+  end
+
+  test "should handle boolean string variations for completed filter" do
+    ["true", "1"].each do |true_value|
+      get tasks_path, params: { completed: true_value }
+      assert_response :ok
+
+      json_response = JSON.parse(response.body)
+      json_response.each do |task|
+        assert_equal true, task["completed"]
+      end
+    end
+
+    ["false", "0"].each do |false_value|
+      get tasks_path, params: { completed: false_value }
+      assert_response :ok
+
+      json_response = JSON.parse(response.body)
+      json_response.each do |task|
+        assert_equal false, task["completed"]
+      end
+    end
+  end
+
+  test "should ignore empty search parameter" do
+    get tasks_path, params: { search: "" }
+    assert_response :ok
+
+    json_response = JSON.parse(response.body)
+    assert json_response.size >= 3
+  end
+
+  test "should ignore empty completed parameter" do
+    get tasks_path, params: { completed: "" }
+    assert_response :ok
+
+    json_response = JSON.parse(response.body)
+    assert json_response.size >= 3
+  end
+
   test "should show task successfully" do
     get task_path(@task)
     assert_response :ok
@@ -147,16 +300,6 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
     json_response = JSON.parse(response.body)
     assert_equal "Missing required parameters", json_response["error"]
     assert_includes json_response["details"], "param is missing or the value is empty or invalid: task"
-  end
-
-  test "should not update task with invalid data" do
-    patch task_path(@task), params: @invalid_params, as: :json
-
-    assert_response :unprocessable_entity
-    json_response = JSON.parse(response.body)
-    assert_equal "Failed to update task", json_response["error"]
-    assert_kind_of Array, json_response["details"]
-    assert json_response["details"].any? { |msg| msg.include?("Title can't be blank") }
   end
 
   test "should return bad request for completely missing parameters" do
@@ -201,6 +344,16 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
     assert_equal true, @task.completed
   end
 
+  test "should not update task with invalid data" do
+    patch task_path(@task), params: @invalid_params, as: :json
+
+    assert_response :unprocessable_entity
+    json_response = JSON.parse(response.body)
+    assert_equal "Failed to update task", json_response["error"]
+    assert_kind_of Array, json_response["details"]
+    assert json_response["details"].any? { |msg| msg.include?("Title can't be blank") }
+  end
+
   test "should return not found when updating non-existent task" do
     patch task_path(id: 999999), params: @valid_params, as: :json
 
@@ -236,6 +389,7 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Task not found", json_response["error"]
   end
 
+  # INTEGRATION TESTS
   test "should handle complete CRUD workflow" do
     post tasks_path, params: @valid_params, as: :json
     assert_response :created
@@ -342,12 +496,6 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
     assert_response :created
   end
 
-  private
-
-  def json_response
-    JSON.parse(response.body)
-  end
-
   test "should not create task without required fields" do
     invalid_params = { task: { title: "" } }
 
@@ -359,5 +507,11 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
     json_response = JSON.parse(response.body)
     assert_equal "Failed to create task", json_response["error"]
     assert_kind_of Array, json_response["details"]
+  end
+
+  private
+
+  def json_response
+    JSON.parse(response.body)
   end
 end

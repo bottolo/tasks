@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { queryClient } from "../lib/queryClient.ts";
 import type { Task } from "../types/task.ts";
 
@@ -54,9 +55,11 @@ export const useCreateTask = () => {
 		},
 		onSuccess: async () => {
 			await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+			toast.success("Task created successfully.");
 		},
 		onError: (error) => {
 			console.error("Error creating task:", error);
+			toast.error(`Error: ${error.message}` || "Failed to create task.");
 		},
 	});
 };
@@ -80,9 +83,10 @@ export const useUpdateTask = () => {
 		onSuccess: async () => {
 			await queryClient.invalidateQueries({ queryKey: ["tasks"] });
 			await queryClient.invalidateQueries({ queryKey: ["task"] });
+			toast.success("Task updated successfully.");
 		},
 		onError: (error) => {
-			console.error("Error updating task:", error);
+			toast.error(`Error: ${error.message}` || "Failed to update task.");
 		},
 	});
 };
@@ -101,9 +105,11 @@ export const useDeleteTask = () => {
 		},
 		onSuccess: async () => {
 			await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+			toast.success("Task deleted.");
 		},
 		onError: (error) => {
 			console.error("Error deleting task:", error);
+			toast.error(`Error: ${error.message}` || "Failed to delete task.");
 		},
 	});
 };

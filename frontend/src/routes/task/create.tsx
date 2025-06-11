@@ -48,6 +48,7 @@ export const CreateTaskRoute = () => {
 					variant="outline"
 					onClick={() => navigate("/")}
 					className="flex items-center gap-2"
+					size={"sm"}
 				>
 					<ArrowLeftIcon className="h-4 w-4" />
 					Return
@@ -57,6 +58,7 @@ export const CreateTaskRoute = () => {
 					type="submit"
 					disabled={isCreating}
 					className="flex items-center gap-2"
+					size={"sm"}
 				>
 					{isCreating ? (
 						<Loader2Icon className="animate-spin" />

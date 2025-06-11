@@ -12,6 +12,10 @@
 	color: rgba(255, 255, 255, 0.87);
 	background-color: #242424;
 
+	::selection {
+		background: #dadada;
+	}
+
 	font-synthesis: none;
 	text-rendering: optimizeLegibility;
 	-webkit-font-smoothing: antialiased;
@@ -123,10 +127,10 @@
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+	* {
+		@apply border-border outline-ring/50;
 	}
-  body {
-    @apply bg-background text-foreground;
+	body {
+		@apply bg-background text-foreground;
 	}
 }
