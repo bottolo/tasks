@@ -47,7 +47,7 @@ export const RootLayout = () => {
 				<Outlet />
 			</div>
 
-			<footer>©...?</footer>
+			<footer>There's no ©opyright!</footer>
 			<Toaster />
 		</main>
 	);

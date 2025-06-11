@@ -10,6 +10,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
 import { ScrollArea } from "@/components/ui/scroll-area.tsx";
+import { cn } from "@/lib/cn.ts";
 import {
 	EllipsisVerticalIcon,
 	EyeIcon,
@@ -93,9 +94,10 @@ export const RootRoute = () => {
 				<div className={"grid md:grid-cols-3 gap-4"}>
 					{tasks?.map((task: Task) => (
 						<Card
-							className={
-								"relative flex flex-row items-center justify-between py-12 rounded-md bg-muted/30"
-							}
+							className={cn(
+								"relative flex flex-row items-center justify-between py-12 rounded-md transition-colors ease-in-out duration-200",
+								selectedTasks.includes(task) && "bg-muted",
+							)}
 							key={task?.id}
 						>
 							{isDeleting && deletingTaskId === task.id && (
