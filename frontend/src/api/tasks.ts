@@ -58,7 +58,7 @@ export const useCreateTask = () => {
 	return useMutation({
 		mutationKey: ["createTask"],
 		mutationFn: async (task: Omit<Task, "id" | "createdAt" | "updatedAt">) => {
-			const response = await fetch(`${BASE_URL}/tasks`, {
+			const response = await fetch(`https://${BASE_URL}/tasks`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",

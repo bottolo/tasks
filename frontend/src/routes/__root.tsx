@@ -28,6 +28,7 @@ import {
 	Loader2Icon,
 	MenuIcon,
 	PencilIcon,
+	PlusIcon,
 	SearchIcon,
 	Trash2Icon,
 	XIcon,
@@ -163,6 +164,12 @@ export const RootRoute = () => {
 									<Trash2Icon />
 									Delete All
 								</DropdownMenuItem>
+								<Link to="/create">
+									<DropdownMenuItem>
+										<PlusIcon />
+										Create New Task
+									</DropdownMenuItem>
+								</Link>
 							</DropdownMenuContent>
 						</DropdownMenu>
 						<Button
