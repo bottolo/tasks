@@ -6,7 +6,7 @@ import { useParams } from "react-router";
 
 export const IndexTaskRoute = () => {
 	const { id } = useParams<{ id: string }>();
-	const { data: task, isLoading } = useGetTaskById(id);
+	const { data: task, isLoading } = useGetTaskById(id || "");
 
 	if (isLoading) {
 		return (

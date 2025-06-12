@@ -12,7 +12,7 @@ export const useGetTasks = (params?: UseGetTasksParams) => {
 	return useQuery<Task[]>({
 		queryKey: ["tasks", params],
 		queryFn: async () => {
-			const url = new URL("http://localhost:3000/tasks");
+			const url = new URL(process.env.API_URL || "http://localhost:3000/tasks");
 
 			if (params?.search) {
 				url.searchParams.append("search", params.search);

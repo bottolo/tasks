@@ -22,7 +22,7 @@ export const EditTaskRoute = () => {
 	const { id } = useParams<{ id: string }>();
 	const navigate = useNavigate();
 
-	const { data: task } = useGetTaskById(id);
+	const { data: task } = useGetTaskById(id || "");
 	const { mutate: updateTask, isPending: isUpdating } = useUpdateTask();
 
 	const updateTaskForm = useForm<UpdateTask>({

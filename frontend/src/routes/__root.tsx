@@ -136,7 +136,7 @@ export const RootRoute = () => {
 							<SelectItem value="incomplete">Incomplete</SelectItem>
 						</SelectContent>
 					</Select>
-					<div className="flex flex-row-reverse gap-2">
+					<div className="flex flex-row gap-2">
 						<DropdownMenu>
 							<DropdownMenuTrigger className="self-end">
 								<Button variant="outline" size="sm">
@@ -173,7 +173,7 @@ export const RootRoute = () => {
 							variant="destructive"
 							size="sm"
 						>
-							<Trash2Icon /> Delete Selected
+							<Trash2Icon />
 						</Button>
 					</div>
 				</div>
