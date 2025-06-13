@@ -1,4 +1,3 @@
-# PostgreSQL configuration
 default: &default
   adapter: postgresql
   encoding: unicode
@@ -9,7 +8,7 @@ development:
   database: tasks_development
   host: <%= ENV.fetch("DATABASE_HOST") { "localhost" } %>
   username: <%= ENV.fetch("DATABASE_USERNAME") { "samuelecastiglia" } %>
-  password: <%= ENV.fetch("DATABASE_PASSWORD") { "" } %>
+  password: 123456
   port: <%= ENV.fetch("DATABASE_PORT") { 5432 } %>
 
 test:
@@ -17,7 +16,7 @@ test:
   database: tasks_test
   host: <%= ENV.fetch("DATABASE_HOST") { "localhost" } %>
   username: <%= ENV.fetch("DATABASE_USERNAME") { "samuelecastiglia" } %>
-  password: <%= ENV.fetch("DATABASE_PASSWORD") { "" } %>
+  password: 123456
   port: <%= ENV.fetch("DATABASE_PORT") { 5432 } %>
 
 production:

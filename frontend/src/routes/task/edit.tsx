@@ -60,13 +60,12 @@ export const EditTaskRoute = () => {
 	};
 
 	return (
-		<>
-			<div className="flex items-center gap-2 mb-4">
+		<div className={"flex flex-col gap-2"}>
+			<div className="flex items-center gap-2">
 				<Button
 					variant="outline"
-					onClick={() => navigate("/")}
+					onClick={() => navigate(-1)}
 					className="flex items-center gap-2"
-					size={"sm"}
 				>
 					<ArrowLeftIcon className="h-4 w-4" />
 					Return
@@ -76,16 +75,9 @@ export const EditTaskRoute = () => {
 					type="submit"
 					disabled={isUpdating}
 					className="flex items-center gap-2"
-					size={"sm"}
 				>
-					{isUpdating ? (
-						<Loader2Icon className="animate-spin" />
-					) : (
-						<>
-							<SaveIcon />
-							Save
-						</>
-					)}
+					{isUpdating ? <Loader2Icon className="animate-spin" /> : <SaveIcon />}
+					Save
 				</Button>
 			</div>
 
@@ -95,7 +87,7 @@ export const EditTaskRoute = () => {
 					onSubmit={updateTaskForm.handleSubmit(onUpdateSubmit, (errors) =>
 						console.log("Form validation errors:", errors),
 					)}
-					className="flex flex-col gap-6"
+					className="flex flex-col gap-4"
 				>
 					<FormField
 						control={updateTaskForm.control}
@@ -123,7 +115,7 @@ export const EditTaskRoute = () => {
 								<FormLabel>Description</FormLabel>
 								<FormControl>
 									<Textarea
-										rows={4}
+										rows={3}
 										{...field}
 										placeholder="Enter task description (optional)"
 									/>
@@ -140,6 +132,7 @@ export const EditTaskRoute = () => {
 							<FormItem className="flex flex-row items-start space-x-3 space-y-0">
 								<FormControl>
 									<Checkbox
+										className={"h-5 w-5"}
 										checked={field.value}
 										onCheckedChange={field.onChange}
 									/>
@@ -150,6 +143,6 @@ export const EditTaskRoute = () => {
 					/>
 				</form>
 			</Form>
-		</>
+		</div>
 	);
 };

@@ -16,7 +16,7 @@ export const RootLayout = () => {
 	const header = useNavigationStore((state) => state.header);
 
 	return (
-		<main className="flex flex-col h-screen w-screen gap-4 max-w-[1034px] mx-auto p-4">
+		<main className="flex flex-col h-screen w-screen gap-4 max-w-[1250px] mx-auto p-4">
 			<header>
 				<h1 className={"font-semibold text-5xl"}> {header?.title}</h1>
 				<h2 className={"opacity-70 text-xl"}>{header?.subtitle}</h2>

@@ -5,12 +5,12 @@ meta {
 }
 
 get {
-  url: http://localhost:3000/tasks?completed=true&search=Task
+  url: {{baseUrl}}/tasks?completed=false&search=task
   body: none
   auth: inherit
 }
 
 params:query {
-  completed: true
-  search: Task
+  completed: false
+  search: task
 }

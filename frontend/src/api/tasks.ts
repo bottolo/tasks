@@ -8,13 +8,14 @@ export interface UseGetTasksParams {
 	completed?: boolean;
 }
 
-const BASE_URL = "fiscotasks-production.up.railway.app";
+const BASE_URL = "https://fiscotasks-production.up.railway.app";
+// const BASE_URL = "http://localhost:3000";
 
 export const useGetTasks = (params?: UseGetTasksParams) => {
 	return useQuery<Task[]>({
 		queryKey: ["tasks", params],
 		queryFn: async () => {
-			const url = new URL(`https://${BASE_URL}/tasks`);
+			const url = new URL(`${BASE_URL}/tasks`);
 
 			if (params?.search) {
 				url.searchParams.append("search", params.search);
@@ -39,7 +40,7 @@ export const useGetTaskById = (id: string) => {
 	return useQuery<Task | null>({
 		queryKey: ["task", id],
 		queryFn: async () => {
-			const response = await fetch(`https://${BASE_URL}/tasks/${id}`);
+			const response = await fetch(`${BASE_URL}/tasks/${id}`);
 			if (!response.ok) {
 				if (response.status === 404) {
 					return null;
@@ -58,7 +59,7 @@ export const useCreateTask = () => {
 	return useMutation({
 		mutationKey: ["createTask"],
 		mutationFn: async (task: Omit<Task, "id" | "createdAt" | "updatedAt">) => {
-			const response = await fetch(`https://${BASE_URL}/tasks`, {
+			const response = await fetch(`${BASE_URL}/tasks`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
@@ -85,7 +86,7 @@ export const useUpdateTask = () => {
 	return useMutation({
 		mutationKey: ["updateTask"],
 		mutationFn: async (task: Omit<Task, "createdAt">) => {
-			const response = await fetch(`https://${BASE_URL}/tasks/${task.id}`, {
+			const response = await fetch(`${BASE_URL}/tasks/${task.id}`, {
 				method: "PUT",
 				headers: {
 					"Content-Type": "application/json",
@@ -112,7 +113,7 @@ export const useDeleteTask = () => {
 	return useMutation({
 		mutationKey: ["deleteTask"],
 		mutationFn: async (id: string) => {
-			const response = await fetch(`https://${BASE_URL}/tasks/${id}`, {
+			const response = await fetch(`${BASE_URL}/tasks/${id}`, {
 				method: "DELETE",
 			});
 			if (!response.ok) {

@@ -42,13 +42,12 @@ export const CreateTaskRoute = () => {
 	};
 
 	return (
-		<>
-			<div className="flex items-center gap-2 mb-4">
+		<div className={"flex flex-col gap-2"}>
+			<div className="flex items-center gap-2">
 				<Button
 					variant="outline"
-					onClick={() => navigate("/")}
+					onClick={() => navigate(-1)}
 					className="flex items-center gap-2"
-					size={"sm"}
 				>
 					<ArrowLeftIcon className="h-4 w-4" />
 					Return
@@ -58,16 +57,9 @@ export const CreateTaskRoute = () => {
 					type="submit"
 					disabled={isCreating}
 					className="flex items-center gap-2"
-					size={"sm"}
 				>
-					{isCreating ? (
-						<Loader2Icon className="animate-spin" />
-					) : (
-						<>
-							<SaveIcon />
-							Save
-						</>
-					)}
+					{isCreating ? <Loader2Icon className="animate-spin" /> : <SaveIcon />}
+					Save
 				</Button>
 			</div>
 			<Form {...createTaskForm}>
@@ -116,7 +108,7 @@ export const CreateTaskRoute = () => {
 								<Checkbox
 									checked={field.value}
 									onCheckedChange={(checked) => field.onChange(checked)}
-									className="h-4 w-4"
+									className="h-5 w-5"
 								/>
 								<FormLabel className="ml-2">Task Completed</FormLabel>
 							</FormItem>
@@ -124,6 +116,6 @@ export const CreateTaskRoute = () => {
 					/>
 				</form>
 			</Form>
-		</>
+		</div>
 	);
 };
