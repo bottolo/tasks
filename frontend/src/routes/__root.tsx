@@ -205,7 +205,7 @@ export const RootRoute = () => {
 							</SelectItem>
 							<SelectItem value="incomplete">
 								<PiSpinnerGap />
-								Incomplete
+								In progress
 							</SelectItem>
 						</SelectContent>
 					</Select>
