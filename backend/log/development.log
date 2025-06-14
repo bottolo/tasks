@@ -10039,3 +10039,56 @@ Processing by TasksController#index as */*
 Completed 200 OK in 4ms (Views: 3.4ms | ActiveRecord: 0.3ms (1 query, 0 cached) | GC: 0.0ms)
 
 
+  [1m[35m (0.2ms)[0m  [1m[34mSELECT pg_try_advisory_lock(4383706967230150875) /*application='Tasks'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (1.5ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Tasks'*/[0m
+  [1m[36mActiveRecord::InternalMetadata Load (1.6ms)[0m  [1m[34mSELECT * FROM "ar_internal_metadata" WHERE "ar_internal_metadata"."key" = 'environment' ORDER BY "ar_internal_metadata"."key" ASC LIMIT 1 /*application='Tasks'*/[0m
+  [1m[35m (0.1ms)[0m  [1m[34mSELECT pg_advisory_unlock(4383706967230150875) /*application='Tasks'*/[0m
+  [1m[36mActiveRecord::SchemaMigration Load (0.2ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Tasks'*/[0m
+Started POST "/tasks" for 192.168.156.1 at 2025-06-14 13:37:28 +0000
+  [1m[36mActiveRecord::SchemaMigration Load (0.8ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Tasks'*/[0m
+Processing by TasksController#create as HTML
+  Parameters: {"title" => "Adding a simple task!", "description" => "Desc", "completed" => false, "task" => {"title" => "Adding a simple task!", "description" => "Desc", "completed" => false}}
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*action='create',application='Tasks',controller='tasks'*/[0m
+  ↳ app/controllers/tasks_controller.rb:110:in 'TasksController#create'
+  [1m[36mTask Create (5.1ms)[0m  [1m[32mINSERT INTO "tasks" ("title", "description", "completed", "created_at", "updated_at") VALUES ('Adding a simple task!', 'Desc', FALSE, '2025-06-14 13:37:28.828334', '2025-06-14 13:37:28.828334') RETURNING "id" /*action='create',application='Tasks',controller='tasks'*/[0m
+  ↳ app/controllers/tasks_controller.rb:110:in 'TasksController#create'
+  [1m[36mTRANSACTION (12.0ms)[0m  [1m[35mCOMMIT /*action='create',application='Tasks',controller='tasks'*/[0m
+  ↳ app/controllers/tasks_controller.rb:110:in 'TasksController#create'
+Completed 201 Created in 39ms (Views: 1.6ms | ActiveRecord: 32.5ms (1 query, 0 cached) | GC: 0.0ms)
+
+
+Started PUT "/tasks/2" for 192.168.156.1 at 2025-06-14 13:38:09 +0000
+Processing by TasksController#update as HTML
+  Parameters: {"title" => "Editing a simple task!", "description" => "Desc", "completed" => false, "id" => "2", "task" => {"title" => "Editing a simple task!", "description" => "Desc", "completed" => false}}
+  [1m[36mTask Load (5.9ms)[0m  [1m[34mSELECT "tasks".* FROM "tasks" WHERE "tasks"."id" = 2 LIMIT 1 /*action='update',application='Tasks',controller='tasks'*/[0m
+  ↳ app/controllers/tasks_controller.rb:125:in 'TasksController#update'
+  [1m[36mTRANSACTION (0.1ms)[0m  [1m[35mBEGIN /*action='update',application='Tasks',controller='tasks'*/[0m
+  ↳ app/controllers/tasks_controller.rb:127:in 'TasksController#update'
+  [1m[36mTask Update (2.8ms)[0m  [1m[33mUPDATE "tasks" SET "title" = 'Editing a simple task!', "updated_at" = '2025-06-14 13:38:09.784774' WHERE "tasks"."id" = 2 /*action='update',application='Tasks',controller='tasks'*/[0m
+  ↳ app/controllers/tasks_controller.rb:127:in 'TasksController#update'
+  [1m[36mTRANSACTION (9.4ms)[0m  [1m[35mCOMMIT /*action='update',application='Tasks',controller='tasks'*/[0m
+  ↳ app/controllers/tasks_controller.rb:127:in 'TasksController#update'
+Completed 200 OK in 94ms (Views: 0.8ms | ActiveRecord: 17.4ms (2 queries, 0 cached) | GC: 0.0ms)
+
+
+Started GET "/tasks" for 192.168.156.1 at 2025-06-14 13:38:13 +0000
+Processing by TasksController#index as HTML
+  [1m[36mTask Load (1.4ms)[0m  [1m[34mSELECT "tasks".* FROM "tasks" /*action='index',application='Tasks',controller='tasks'*/[0m
+  ↳ app/controllers/tasks_controller.rb:93:in 'TasksController#index'
+Completed 200 OK in 19ms (Views: 16.3ms | ActiveRecord: 0.8ms (1 query, 0 cached) | GC: 0.0ms)
+
+
+Started DELETE "/tasks/2" for 192.168.156.1 at 2025-06-14 13:38:38 +0000
+Processing by TasksController#destroy as HTML
+  Parameters: {"id" => "2"}
+  [1m[36mTask Load (7.1ms)[0m  [1m[34mSELECT "tasks".* FROM "tasks" WHERE "tasks"."id" = 2 LIMIT 1 /*action='destroy',application='Tasks',controller='tasks'*/[0m
+  ↳ app/controllers/tasks_controller.rb:144:in 'TasksController#destroy'
+  [1m[36mTRANSACTION (0.2ms)[0m  [1m[35mBEGIN /*action='destroy',application='Tasks',controller='tasks'*/[0m
+  ↳ app/controllers/tasks_controller.rb:146:in 'TasksController#destroy'
+  [1m[36mTask Destroy (1.3ms)[0m  [1m[31mDELETE FROM "tasks" WHERE "tasks"."id" = 2 /*action='destroy',application='Tasks',controller='tasks'*/[0m
+  ↳ app/controllers/tasks_controller.rb:146:in 'TasksController#destroy'
+  [1m[36mTRANSACTION (6.9ms)[0m  [1m[35mCOMMIT /*action='destroy',application='Tasks',controller='tasks'*/[0m
+  ↳ app/controllers/tasks_controller.rb:146:in 'TasksController#destroy'
+Completed 204 No Content in 129ms (ActiveRecord: 14.4ms (2 queries, 0 cached) | GC: 77.3ms)
+
+
