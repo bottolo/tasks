@@ -1,19 +1,19 @@
 meta {
   name: Delete Task
   type: http
-  seq: 7
+  seq: 8
 }
 
-put {
+delete {
   url: {{baseUrl}}/tasks/2
-  body: json
+  body: none
   auth: inherit
 }
 
 body:json {
   {
-     "title":"Editing a simple task!",
-     "description":"Desc",
-     "completed":false
+    "title": "Editing a simple task!",
+    "description": "Desc",
+    "completed": false
   }
 }

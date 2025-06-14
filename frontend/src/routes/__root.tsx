@@ -1,9 +1,12 @@
-import { TaskCard } from "@/components/task-card.tsx";
+import { Badge } from "@/components/ui/badge.tsx";
 import { Button } from "@/components/ui/button.tsx";
+import { Card } from "@/components/ui/card.tsx";
+import { Checkbox } from "@/components/ui/checkbox.tsx";
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
+	DropdownMenuSeparator,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
 import { Input } from "@/components/ui/input.tsx";
@@ -24,28 +27,41 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "@/components/ui/select.tsx";
+import { cn } from "@/lib/cn.ts";
 import _ from "lodash";
 import { Loader2Icon, SearchIcon, XIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
 	PiCheckCircle,
+	PiCheckCircleFill,
 	PiDot,
 	PiDotsThreeVertical,
 	PiListChecks,
 	PiListPlus,
+	PiPencilSimpleLine,
 	PiPlus,
+	PiSpinner,
 	PiSpinnerGap,
+	PiTextAlignLeft,
 	PiTrash,
 	PiX,
 } from "react-icons/pi";
 import { Link } from "react-router";
-import { useDeleteTask, useGetTasks } from "../api/tasks.ts";
+import {
+	useDeleteTask,
+	useDeleteTasks,
+	useGetTasks,
+	useUpdateTask,
+	useUpdateTasks,
+} from "../api/tasks.ts";
 import type { Task } from "../types/task.ts";
 
 const ITEMS_PER_PAGE = 9;
 
 export const RootRoute = () => {
-	const [selectedTasks, setSelectedTasks] = useState<Task[]>([]);
+	const [selectedTaskIds, setSelectedTaskIds] = useState<Set<string>>(
+		new Set(),
+	);
 	const [deletingTaskId, setDeletingTaskId] = useState<string | undefined>(
 		undefined,
 	);
@@ -53,20 +69,6 @@ export const RootRoute = () => {
 	const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
 	const [completedFilter, setCompletedFilter] = useState<string>("all");
 	const [currentPage, setCurrentPage] = useState(1);
-
-	const debouncedSetSearch = useCallback(
-		_.debounce((value: string) => {
-			setDebouncedSearchTerm(value);
-		}, 300),
-		[],
-	);
-
-	useEffect(() => {
-		debouncedSetSearch(searchTerm);
-		return () => {
-			debouncedSetSearch.cancel();
-		};
-	}, [searchTerm, debouncedSetSearch]);
 
 	const queryParams = {
 		search: debouncedSearchTerm || undefined,
@@ -79,50 +81,21 @@ export const RootRoute = () => {
 	};
 
 	const { data: tasks, isLoading: isLoadingTasks } = useGetTasks(queryParams);
-	const { mutate: deleteTask, isPending: isDeleting } = useDeleteTask();
+	const { mutate: deleteTask, isPending: isDeletingTask } = useDeleteTask();
+	const { mutate: updateTask } = useUpdateTask();
+	const { mutate: updateTasks, isPending: isUpdatingTasks } = useUpdateTasks();
+	const { mutate: deleteTasks, isPending: isDeletingTasks } = useDeleteTasks();
 
-	const { paginatedTasks, totalPages, startIndex, endIndex } = useMemo(() => {
-		if (!tasks || tasks.length === 0) {
-			return {
-				paginatedTasks: [],
-				totalPages: 0,
-				startIndex: 0,
-				endIndex: 0,
-			};
-		}
-
-		const chunks = _.chunk(tasks, ITEMS_PER_PAGE);
-		const total = chunks.length;
-		const currentTasks = chunks[currentPage - 1] || [];
-		const start = (currentPage - 1) * ITEMS_PER_PAGE + 1;
-		const end = Math.min(currentPage * ITEMS_PER_PAGE, tasks.length);
-
-		return {
-			paginatedTasks: currentTasks,
-			totalPages: total,
-			startIndex: start,
-			endIndex: end,
-		};
-	}, [tasks, currentPage]);
-
-	useEffect(() => {
-		setCurrentPage(1);
-	}, [debouncedSearchTerm, completedFilter]);
-
-	useEffect(() => {
-		setSelectedTasks([]);
-	}, [tasks]);
+	const debouncedSetSearch = useCallback(
+		_.debounce((value: string) => {
+			setDebouncedSearchTerm(value);
+		}, 300),
+		[],
+	);
 
 	const handleDeleteTask = (taskId: string) => {
 		setDeletingTaskId(taskId);
 		deleteTask(taskId);
-	};
-
-	const handleDeleteSelected = () => {
-		selectedTasks.map((task) => {
-			deleteTask(task.id);
-		});
-		setSelectedTasks([]);
 	};
 
 	const clearSearch = () => {
@@ -135,18 +108,96 @@ export const RootRoute = () => {
 	};
 
 	const handleSelectAllVisible = () => {
-		setSelectedTasks((prev) => {
-			const currentIds = new Set(prev.map((t) => t.id));
-			const newTasks = paginatedTasks.filter(
-				(task) => !currentIds.has(task.id),
-			);
-			return [...prev, ...newTasks];
+		setSelectedTaskIds((prev) => {
+			const newSet = new Set(prev);
+			_.forEach(paginatedTasks, (task) => newSet.add(task.id));
+			return newSet;
 		});
 	};
 
 	const handleSelectAll = () => {
-		setSelectedTasks(tasks || []);
+		setSelectedTaskIds(new Set(_.map(tasks, "id")));
 	};
+
+	const handleToggleTaskSelection = (task: Task, checked: boolean) => {
+		if (checked) {
+			setSelectedTaskIds((prev) => new Set([...prev, task.id]));
+		} else {
+			setSelectedTaskIds((prev) => {
+				const newSet = new Set(prev);
+				newSet.delete(task.id);
+				return newSet;
+			});
+		}
+	};
+
+	const handleMarkSelectedAsCompleted = () => {
+		const updatedTasks = _.map(selectedTasks, (task) =>
+			_.assign({}, task, { completed: true }),
+		);
+		updateTasks(updatedTasks);
+	};
+
+	const handleMarkSelectedAsInProgress = () => {
+		const updatedTasks = _.map(selectedTasks, (task) =>
+			_.assign({}, task, { completed: false }),
+		);
+		updateTasks(updatedTasks);
+	};
+
+	const handleDeleteSelected = () => {
+		deleteTasks(Array.from(selectedTaskIds));
+	};
+
+	const handleDeselectAll = () => {
+		setSelectedTaskIds(new Set());
+	};
+
+	const selectedTasks = useMemo(
+		() =>
+			tasks ? _.filter(tasks, (task) => selectedTaskIds.has(task.id)) : [],
+		[tasks, selectedTaskIds],
+	);
+
+	const { paginatedTasks, totalPages, startIndex, endIndex } = useMemo(() => {
+		if (!tasks || tasks.length === 0) {
+			return {
+				paginatedTasks: [],
+				totalPages: 0,
+				startIndex: 0,
+				endIndex: 0,
+			};
+		}
+
+		const sortedTasks = _.orderBy(tasks, ["id"], ["asc"]);
+		const chunks = _.chunk(sortedTasks, ITEMS_PER_PAGE);
+		const total = chunks.length;
+		const currentTasks = chunks[currentPage - 1] || [];
+		const start = (currentPage - 1) * ITEMS_PER_PAGE + 1;
+		const end = Math.min(currentPage * ITEMS_PER_PAGE, sortedTasks.length);
+
+		return {
+			paginatedTasks: currentTasks,
+			totalPages: total,
+			startIndex: start,
+			endIndex: end,
+		};
+	}, [tasks, currentPage]);
+
+	useEffect(() => {
+		debouncedSetSearch(searchTerm);
+		return () => {
+			debouncedSetSearch.cancel();
+		};
+	}, [searchTerm, debouncedSetSearch]);
+
+	useEffect(() => {
+		setCurrentPage(1);
+	}, [debouncedSearchTerm, completedFilter]);
+
+	useEffect(() => {
+		setSelectedTaskIds(new Set());
+	}, [tasks]);
 
 	return (
 		<div className="flex flex-col h-full gap-2">
@@ -217,12 +268,18 @@ export const RootRoute = () => {
 							</Button>
 						</Link>
 						<Button
-							disabled={selectedTasks.length === 0 || isDeleting}
+							disabled={selectedTaskIds.size === 0 || isDeletingTask}
 							onClick={handleDeleteSelected}
 							variant="destructive"
 						>
-							<PiTrash />
+							{isDeletingTasks ? (
+								<PiSpinner className="animate-spin" />
+							) : (
+								<PiTrash />
+							)}
+							Delete Selected
 						</Button>
+
 						<DropdownMenu>
 							<DropdownMenuTrigger className="self-end">
 								<Button variant="outline">
@@ -234,7 +291,22 @@ export const RootRoute = () => {
 								side="bottom"
 								align="end"
 							>
-								<DropdownMenuItem onClick={() => setSelectedTasks([])}>
+								<DropdownMenuItem
+									onClick={handleMarkSelectedAsCompleted}
+									disabled={selectedTaskIds.size === 0 || isUpdatingTasks}
+								>
+									<PiCheckCircle />
+									Mark Selected as Completed
+								</DropdownMenuItem>
+								<DropdownMenuItem
+									onClick={handleMarkSelectedAsInProgress}
+									disabled={selectedTaskIds.size === 0 || isUpdatingTasks}
+								>
+									<PiSpinnerGap />
+									Mark Selected as In Progress
+								</DropdownMenuItem>
+								<DropdownMenuSeparator />
+								<DropdownMenuItem onClick={handleDeselectAll}>
 									<PiX />
 									Deselect All
 								</DropdownMenuItem>
@@ -245,14 +317,6 @@ export const RootRoute = () => {
 								<DropdownMenuItem onClick={handleSelectAll}>
 									<PiListChecks />
 									Select All ({tasks?.length || 0})
-								</DropdownMenuItem>
-								<DropdownMenuItem
-									onClick={() =>
-										selectedTasks?.map((task) => handleDeleteTask(task.id))
-									}
-								>
-									<PiTrash color={"red"} />
-									<span className={"text-red-500"}>Delete Selected</span>
 								</DropdownMenuItem>
 							</DropdownMenuContent>
 						</DropdownMenu>
@@ -279,29 +343,131 @@ export const RootRoute = () => {
 					<span>
 						Showing {startIndex}-{endIndex} of {tasks.length} tasks
 					</span>
-					<span>
-						Page {currentPage} of {totalPages}
-					</span>
+					<div className={"flex flex-row gap-1"}>
+						{selectedTaskIds.size > 0 && (
+							<span>
+								Selected {selectedTaskIds.size} task
+								{selectedTaskIds.size !== 1 ? "s" : ""},
+							</span>
+						)}
+						<span>
+							Page {currentPage} of {totalPages}
+						</span>
+					</div>
 				</div>
 			)}
-
 			{isLoadingTasks ? (
 				<div className="flex my-auto items-center justify-center h-screen">
-					<Loader2Icon className="animate-spin h-6 w-6" />
+					<PiSpinner className="animate-spin" size={24} />
 				</div>
 			) : (
-				<ScrollArea className="flex-1 h-1/2">
+				<ScrollArea className={cn("flex-1 h-1/2")}>
 					<div className="grid md:grid-cols-3 gap-4">
 						{paginatedTasks.map((task: Task) => (
-							<TaskCard
-								key={task.id}
-								task={task}
-								selectedTasks={selectedTasks}
-								setSelectedTasks={setSelectedTasks}
-								isDeleting={isDeleting}
-								deletingTaskId={deletingTaskId}
-								handleDeleteTask={handleDeleteTask}
-							/>
+							<Card
+								className={cn(
+									"relative flex flex-col py-4 px-4 rounded-md transition-colors ease-in-out duration-200 min-h-[150px]",
+									selectedTaskIds.has(task.id) && "bg-muted",
+								)}
+								key={task?.id}
+							>
+								{isDeletingTask && deletingTaskId === task.id && (
+									<div className="absolute inset-0 bg-gray-200 backdrop-blur-lg opacity-50 flex items-center justify-center rounded-md transition-all ease-in-out">
+										<Loader2Icon className="animate-spin h-6 w-6" />
+									</div>
+								)}
+
+								<div className="flex justify-between items-center">
+									<Checkbox
+										checked={selectedTaskIds.has(task.id)}
+										onCheckedChange={(checked) =>
+											handleToggleTaskSelection(task, !!checked)
+										}
+										className="h-5 w-5"
+									/>
+
+									<DropdownMenu>
+										<DropdownMenuTrigger
+											className={
+												"hover:bg-stone-200 transition-colors ease-in-out duration-50 rounded-md"
+											}
+										>
+											<PiDotsThreeVertical
+												className={"cursor-pointer"}
+												size={24}
+											/>
+										</DropdownMenuTrigger>
+										<DropdownMenuContent
+											className={"w-[200px]"}
+											side="bottom"
+											align="end"
+										>
+											<DropdownMenuItem
+												onClick={() =>
+													updateTask(_.assign({}, task, { completed: true }))
+												}
+											>
+												<PiCheckCircle />
+												Mark as Completed
+											</DropdownMenuItem>
+											<DropdownMenuItem
+												onClick={() =>
+													updateTask(_.assign({}, task, { completed: false }))
+												}
+											>
+												<PiSpinnerGap />
+												Mark as In Progress
+											</DropdownMenuItem>
+											<DropdownMenuSeparator />
+											<Link to={`${task.id}`} state={{ id: task.id }}>
+												<DropdownMenuItem>
+													<PiTextAlignLeft />
+													Details
+												</DropdownMenuItem>
+											</Link>
+
+											<Link to={`${task.id}/edit`} state={{ id: task.id }}>
+												<DropdownMenuItem>
+													<PiPencilSimpleLine />
+													Edit
+												</DropdownMenuItem>
+											</Link>
+											<DropdownMenuItem
+												onClick={() => handleDeleteTask(task.id)}
+											>
+												<PiTrash color={"red"} />
+												<span className={"text-red-500"}>Delete</span>
+											</DropdownMenuItem>
+										</DropdownMenuContent>
+									</DropdownMenu>
+								</div>
+
+								<div className="flex-1">
+									<h3 className="text-2xl font-semibold mb-2">{task.title}</h3>
+									<p className="text-md opacity-70">
+										{task.description ?? "No description available."}
+									</p>
+								</div>
+
+								<div className="flex justify-between items-center">
+									<span className="text-md text-muted-foreground">
+										FT-{task.id}
+									</span>
+									<Badge
+										variant={task?.completed ? "default" : "secondary"}
+										className={
+											"h-7 text-md gap-2 font-light hover:scale-101 transition-transform ease-in-out duration-200"
+										}
+									>
+										{task?.completed ? (
+											<PiCheckCircleFill className={"scale-125"} />
+										) : (
+											<PiSpinnerGap className={"scale-125 "} />
+										)}
+										{task?.completed ? "Completed" : "In progress"}
+									</Badge>
+								</div>
+							</Card>
 						))}
 					</div>
 				</ScrollArea>

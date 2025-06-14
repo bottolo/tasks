@@ -514,4 +514,269 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
   def json_response
     JSON.parse(response.body)
   end
+
+  # BULK UPDATE TESTS
+  test "should bulk update multiple tasks successfully" do
+    task1 = Task.create!(title: "Task 1", description: "Description 1", completed: false)
+    task2 = Task.create!(title: "Task 2", description: "Description 2", completed: false)
+
+    bulk_params = {
+      tasks: [
+        { id: task1.id, title: "Updated Task 1", completed: true },
+        { id: task2.id, description: "Updated Description 2", completed: true }
+      ]
+    }
+
+    put tasks_path, params: bulk_params, as: :json
+    assert_response :ok
+
+    json_response = JSON.parse(response.body)
+    assert_equal "Tasks updated successfully", json_response["message"]
+    assert_kind_of Array, json_response["tasks"]
+    assert_equal 2, json_response["tasks"].size
+
+    task1.reload
+    task2.reload
+    assert_equal "Updated Task 1", task1.title
+    assert_equal true, task1.completed
+    assert_equal "Updated Description 2", task2.description
+    assert_equal true, task2.completed
+  end
+
+  test "should handle partial bulk updates" do
+    task1 = Task.create!(title: "Task 1", description: "Description 1", completed: false)
+    task2 = Task.create!(title: "Task 2", description: "Description 2", completed: false)
+
+    bulk_params = {
+      tasks: [
+        { id: task1.id, completed: true },
+        { id: task2.id, title: "Only Title Updated" }
+      ]
+    }
+
+    put tasks_path, params: bulk_params, as: :json
+    assert_response :ok
+
+    task1.reload
+    task2.reload
+    assert_equal true, task1.completed
+    assert_equal "Task 1", task1.title
+    assert_equal "Only Title Updated", task2.title
+    assert_equal false, task2.completed
+  end
+
+  test "should rollback bulk update on validation failure" do
+    task1 = Task.create!(title: "Task 1", description: "Description 1", completed: false)
+    task2 = Task.create!(title: "Task 2", description: "Description 2", completed: false)
+
+    bulk_params = {
+      tasks: [
+        { id: task1.id, title: "Valid Update", completed: true },
+        { id: task2.id, title: "", completed: true }
+      ]
+    }
+
+    put tasks_path, params: bulk_params, as: :json
+    assert_response :unprocessable_entity
+
+    json_response = JSON.parse(response.body)
+    assert_equal "Failed to update some tasks", json_response["error"]
+    assert_kind_of Array, json_response["details"]
+
+    task1.reload
+    task2.reload
+    assert_equal "Task 1", task1.title
+    assert_equal false, task1.completed
+    assert_equal "Task 2", task2.title
+  end
+
+  test "should return not found for bulk update with non-existent task" do
+    task1 = Task.create!(title: "Task 1", description: "Description 1", completed: false)
+
+    bulk_params = {
+      tasks: [
+        { id: task1.id, completed: true },
+        { id:999999, completed: true }
+      ]
+    }
+
+    put tasks_path, params: bulk_params, as: :json
+    assert_response :not_found
+
+    json_response = JSON.parse(response.body)
+    assert_equal "One or more tasks not found", json_response["error"]
+  end
+
+  test "should return bad request for missing tasks parameter in bulk update" do
+    put tasks_path, params: { invalid: "params" }, as: :json
+
+    assert_response :bad_request
+    json_response = JSON.parse(response.body)
+    assert_equal "Missing required parameters", json_response["error"]
+    assert_includes json_response["details"], "param is missing or the value is empty or invalid: tasks"
+  end
+
+  test "should handle empty tasks array in bulk update" do
+    put tasks_path, params: { tasks: [] }, as: :json
+
+    assert_response :ok
+    json_response = JSON.parse(response.body)
+    assert_equal "Tasks updated successfully", json_response["message"]
+    assert_equal [], json_response["tasks"]
+  end
+
+  # BULK DELETE TESTS
+  test "should bulk delete multiple tasks successfully" do
+    task1 = Task.create!(title: "Task 1", description: "Description 1", completed: false)
+    task2 = Task.create!(title: "Task 2", description: "Description 2", completed: false)
+    task3 = Task.create!(title: "Task 3", description: "Description 3", completed: true)
+
+    initial_count = Task.count
+    ids_to_delete = [task1.id, task2.id]
+
+    assert_difference('Task.count', -2) do
+      delete tasks_path, params: { ids: ids_to_delete }, as: :json
+    end
+
+    assert_response :ok
+    json_response = JSON.parse(response.body)
+    assert_equal "Tasks deleted successfully", json_response["message"]
+    assert_equal 2, json_response["deleted_count"]
+
+    assert_raises(ActiveRecord::RecordNotFound) { task1.reload }
+    assert_raises(ActiveRecord::RecordNotFound) { task2.reload }
+
+    assert_nothing_raised { task3.reload }
+  end
+
+  test "should handle bulk delete with non-existent task IDs" do
+    task1 = Task.create!(title: "Task 1", description: "Description 1", completed: false)
+
+    initial_count = Task.count
+    ids_to_delete = [task1.id, 999999, 999998]
+
+    assert_difference('Task.count', -1) do
+      delete tasks_path, params: { ids: ids_to_delete }, as: :json
+    end
+
+    assert_response :ok
+    json_response = JSON.parse(response.body)
+    assert_equal "Tasks deleted successfully", json_response["message"]
+    assert_equal 1, json_response["deleted_count"]
+  end
+
+  test "should return bad request for missing ids parameter in bulk delete" do
+    delete tasks_path, params: { invalid: "params" }, as: :json
+
+    assert_response :bad_request
+    json_response = JSON.parse(response.body)
+    assert_equal "Missing required parameters", json_response["error"]
+    assert_includes json_response["details"], "param is missing or the value is empty or invalid: ids"
+  end
+
+  test "should handle empty ids array in bulk delete" do
+    initial_count = Task.count
+
+    assert_no_difference('Task.count') do
+      delete tasks_path, params: { ids: [] }, as: :json
+    end
+
+    assert_response :ok
+    json_response = JSON.parse(response.body)
+    assert_equal "Tasks deleted successfully", json_response["message"]
+    assert_equal 0, json_response["deleted_count"]
+  end
+
+  test "should handle bulk delete with all non-existent IDs" do
+    initial_count = Task.count
+
+    assert_no_difference('Task.count') do
+      delete tasks_path, params: { ids: [999999, 999998, 999997] }, as: :json
+    end
+
+    assert_response :ok
+    json_response = JSON.parse(response.body)
+    assert_equal "Tasks deleted successfully", json_response["message"]
+    assert_equal 0, json_response["deleted_count"]
+  end
+
+  # BULK OPERATIONS INTEGRATION TESTS
+  test "should handle bulk operations workflow" do
+    task1 = Task.create!(title: "Task 1", description: "Description 1", completed: false)
+    task2 = Task.create!(title: "Task 2", description: "Description 2", completed: false)
+    task3 = Task.create!(title: "Task 3", description: "Description 3", completed: false)
+
+    bulk_update_params = {
+      tasks: [
+        { id: task1.id, completed: true },
+        { id: task2.id, title: "Updated Task 2", completed: true }
+      ]
+    }
+
+    put tasks_path, params: bulk_update_params, as: :json
+    assert_response :ok
+
+    task1.reload
+    task2.reload
+    assert_equal true, task1.completed
+    assert_equal "Updated Task 2", task2.title
+    assert_equal true, task2.completed
+
+    assert_difference('Task.count', -2) do
+      delete tasks_path, params: { ids: [task1.id, task2.id] }, as: :json
+    end
+
+    assert_response :ok
+
+    assert_nothing_raised { task3.reload }
+    assert_equal "Task 3", task3.title
+  end
+
+  test "should handle mixed single and bulk operations" do
+    task1 = Task.create!(title: "Task 1", description: "Description 1", completed: false)
+    task2 = Task.create!(title: "Task 2", description: "Description 2", completed: false)
+
+    single_update_params = { task: { completed: true } }
+    put task_path(task1), params: single_update_params, as: :json
+    assert_response :ok
+
+    bulk_update_params = { tasks: [{ id: task2.id, completed: true }] }
+    put tasks_path, params: bulk_update_params, as: :json
+    assert_response :ok
+
+    task1.reload
+    task2.reload
+    assert_equal true, task1.completed
+    assert_equal true, task2.completed
+
+    delete task_path(task1)
+    assert_response :no_content
+
+    delete tasks_path, params: { ids: [task2.id] }, as: :json
+    assert_response :ok
+
+    assert_raises(ActiveRecord::RecordNotFound) { task1.reload }
+    assert_raises(ActiveRecord::RecordNotFound) { task2.reload }
+  end
+
+  test "should validate bulk update maintains data types" do
+    task1 = Task.create!(title: "Task 1", description: "Description 1", completed: false)
+
+    bulk_params = {
+      tasks: [
+        { id: task1.id, title: "Updated Title", description: "Updated Description", completed: true }
+      ]
+    }
+
+    put tasks_path, params: bulk_params, as: :json
+    assert_response :ok
+
+    json_response = JSON.parse(response.body)
+    updated_task = json_response["tasks"].first
+
+    assert_kind_of Integer, updated_task["id"]
+    assert_kind_of String, updated_task["title"]
+    assert_kind_of String, updated_task["description"]
+    assert_includes [true, false], updated_task["completed"]
+  end
 end

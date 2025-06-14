@@ -1,7 +1,9 @@
 Rails.application.routes.draw do
+  put '/tasks', to: 'tasks#update'
+  delete '/tasks', to: 'tasks#destroy'
 
+  # Standard resourceful routes
   resources :tasks
-
 
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

@@ -8,8 +8,9 @@ export interface UseGetTasksParams {
 	completed?: boolean;
 }
 
-// const BASE_URL = "https://fiscotasks-production.up.railway.app";
-const BASE_URL = "http://localhost:3000";
+// Trying to figure out why railway is not working with the environment variables.
+const BASE_URL = "https://fiscotasks-production.up.railway.app";
+// const BASE_URL = "http://localhost:3000";
 
 export const useGetTasks = (params?: UseGetTasksParams) => {
 	return useQuery<Task[]>({
@@ -87,7 +88,7 @@ export const useUpdateTask = () => {
 		mutationKey: ["updateTask"],
 		mutationFn: async (task: Omit<Task, "createdAt">) => {
 			const response = await fetch(`${BASE_URL}/tasks/${task.id}`, {
-				method: "PUT",
+				method: "PATCH",
 				headers: {
 					"Content-Type": "application/json",
 				},
@@ -105,6 +106,32 @@ export const useUpdateTask = () => {
 		},
 		onError: (error) => {
 			toast.error(`Error: ${error.message}` || "Failed to update task.");
+		},
+	});
+};
+
+export const useUpdateTasks = () => {
+	return useMutation({
+		mutationKey: ["updateTasks"],
+		mutationFn: async (tasks: Omit<Task, "createdAt">[]) => {
+			const response = await fetch(`${BASE_URL}/tasks`, {
+				method: "PUT",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ tasks }),
+			});
+			if (!response.ok) {
+				throw new Error("Network response was not ok");
+			}
+			return response.json();
+		},
+		onSuccess: async () => {
+			await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+			toast.success("Tasks updated successfully.");
+		},
+		onError: (error) => {
+			toast.error(`Error: ${error.message}` || "Failed to update tasks.");
 		},
 	});
 };
@@ -128,6 +155,35 @@ export const useDeleteTask = () => {
 		onError: (error) => {
 			console.error("Error deleting task:", error);
 			toast.error(`Error: ${error.message}` || "Failed to delete task.");
+		},
+	});
+};
+
+export const useDeleteTasks = () => {
+	return useMutation({
+		mutationKey: ["deleteTasks"],
+		mutationFn: async (ids: string[]) => {
+			const response = await fetch(`${BASE_URL}/tasks`, {
+				method: "DELETE",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify({ ids }),
+			});
+			if (!response.ok) {
+				throw new Error("Network response was not ok");
+			}
+			return ids;
+		},
+		onSuccess: async (data) => {
+			await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+			toast.success(
+				`Deleted ${data.length} task${data.length > 1 ? "s" : ""}.`,
+			);
+		},
+		onError: (error) => {
+			console.error("Error deleting tasks:", error);
+			toast.error(`Error: ${error.message}` || "Failed to delete tasks.");
 		},
 	});
 };

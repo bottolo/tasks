@@ -4,16 +4,16 @@ meta {
   seq: 6
 }
 
-post {
-  url: {{baseUrl}}/tasks
+patch {
+  url: {{baseUrl}}/tasks/70
   body: json
   auth: inherit
 }
 
 body:json {
   {
-     "title":"Adding a simple task!",
-     "description":"Desc",
-     "completed":false
+    "title": "Adding a simple task! wwwww",
+    "description": "Desc",
+    "completed": false
   }
 }

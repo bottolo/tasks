@@ -4,18 +4,33 @@
 #   GET    /tasks       # List all tasks (with optional filtering)
 #   GET    /tasks/:id   # Show specific task
 #   POST   /tasks       # Create new task
+#   PUT    /tasks       # Bulk update multiple tasks
+#   DELETE /tasks       # Bulk delete multiple tasks
 #   PATCH  /tasks/:id   # Update existing task (PATCH preferred)
 #   PUT    /tasks/:id   # Update existing task (alternative to PATCH)
 #   DELETE /tasks/:id   # Delete task
 #
 # == Parameters:
-# === Required Parameters (POST/PATCH):
+# === Required Parameters (POST/PATCH/PUT):
 #   params: {
 #     task: {
 #       title: String        # Required, 1-255 characters
 #       description: String  # Optional, max 1000 characters
 #       completed: Boolean   # Required, true or false
 #     }
+#   }
+#
+# === Bulk Update Parameters (PUT /tasks):
+#   params: {
+#     tasks: [
+#       { id: Integer, title: String, description: String, completed: Boolean },
+#       { id: Integer, completed: Boolean }  # Partial updates allowed
+#     ]
+#   }
+#
+# === Bulk Delete Parameters (DELETE /tasks):
+#   params: {
+#     ids: [Integer, Integer, ...]  # Array of task IDs to delete
 #   }
 #
 # === URL Parameters:
@@ -25,53 +40,20 @@
 #   completed: Boolean   # Filter by completion status (true/false)
 #   search: String       # Search tasks by title (case-insensitive)
 #
-# == Validations:
-# The controller relies on the Task model for validation:
-# * Title: Required, must be 1-255 characters
-# * Description: Optional, maximum 1000 characters
-# * Completed: Required boolean value
-#
-# == Error Handling Strategy:
-# The controller implements comprehensive error handling:
-# 1. ActiveRecord::RecordNotFound - Returns 404 for missing resources
-# 2. ActionController::ParameterMissing - Returns 400 for missing params
-# 3. Validation Errors - Returns 422 with detailed validation messages
-# 4. StandardError - Returns 500 for unexpected server errors
-#
 # == Usage Examples:
-#   # Get all tasks
-#   GET /tasks
-#
-#   # Get only completed tasks
-#   GET /tasks?completed=true
-#
-#   # Get only incomplete tasks
-#   GET /tasks?completed=false
-#
-#   # Search for tasks with "job" in the title
-#   GET /tasks?search=job
-#
-#   # Combine filters: incomplete tasks with "rails" in title
-#   GET /tasks?completed=false&search=rails
-#
-#   # Create a new task
-#   POST /tasks
-#   Content-Type: application/json
+#   # Bulk update multiple tasks
+#   PUT /tasks
 #   {
-#     "task": {
-#       "title": "Get a Job",
-#       "description": "Try to get a job by using Rails",
-#       "completed": false
-#     }
+#     "tasks": [
+#       { "id": 1, "completed": true },
+#       { "id": 2, "title": "Updated title", "completed": false }
+#     ]
 #   }
 #
-#   # Update a task
-#   PATCH /tasks/1
-#   Content-Type: application/json
+#   # Bulk delete multiple tasks
+#   DELETE /tasks
 #   {
-#     "task": {
-#       "completed": true
-#     }
+#     "ids": [1, 2, 3, 4]
 #   }
 #
 
@@ -122,6 +104,10 @@ class TasksController < ApplicationController
   end
 
   def update
+    if params[:id].blank?
+      return bulk_update_tasks
+    end
+
     task = Task.find(params[:id])
 
     if task.update(task_params)
@@ -141,6 +127,10 @@ class TasksController < ApplicationController
   end
 
   def destroy
+    if params[:id].blank?
+      return bulk_destroy_tasks
+    end
+
     task = Task.find(params[:id])
 
     if task.destroy
@@ -158,6 +148,57 @@ class TasksController < ApplicationController
   end
 
   private
+
+  def bulk_update_tasks
+    unless params.has_key?(:tasks)
+      return render json: { error: 'Missing required parameters', details: 'param is missing or the value is empty or invalid: tasks' }, status: :bad_request
+    end
+
+    tasks_params = params[:tasks] || []
+    updated_tasks = []
+    errors = []
+
+    Task.transaction do
+      tasks_params.each do |task_data|
+        task = Task.find(task_data[:id])
+        if task.update(task_data.except(:id).permit(:title, :description, :completed))
+          updated_tasks << task
+        else
+          errors << { id: task.id, errors: task.errors.full_messages }
+        end
+      end
+
+      if errors.any?
+        raise ActiveRecord::Rollback
+      end
+    end
+
+    if errors.any?
+      render json: { error: 'Failed to update some tasks', details: errors }, status: :unprocessable_entity
+    else
+      render json: { message: 'Tasks updated successfully', tasks: updated_tasks }, status: :ok
+    end
+  rescue ActiveRecord::RecordNotFound => e
+    render json: { error: 'One or more tasks not found' }, status: :not_found
+  rescue StandardError => e
+    render json: { error: 'Unable to update tasks', details: e.message }, status: :internal_server_error
+  end
+
+  def bulk_destroy_tasks
+    unless params.has_key?(:ids)
+      return render json: { error: 'Missing required parameters', details: 'param is missing or the value is empty or invalid: ids' }, status: :bad_request
+    end
+
+    ids = params[:ids] || []
+    deleted_count = Task.where(id: ids).destroy_all.count
+
+    render json: {
+      message: 'Tasks deleted successfully',
+      deleted_count: deleted_count
+    }, status: :ok
+  rescue StandardError => e
+    render json: { error: 'Unable to delete tasks', details: e.message }, status: :internal_server_error
+  end
 
   def task_params
     params.require(:task).permit(:title, :description, :completed)
