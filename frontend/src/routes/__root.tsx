@@ -169,7 +169,7 @@ export const RootRoute = () => {
 			};
 		}
 
-		const sortedTasks = _.orderBy(tasks, ["id"], ["asc"]);
+		const sortedTasks = _.orderBy(tasks, ["id"], ["desc"]);
 		const chunks = _.chunk(sortedTasks, ITEMS_PER_PAGE);
 		const total = chunks.length;
 		const currentTasks = chunks[currentPage - 1] || [];
@@ -277,7 +277,7 @@ export const RootRoute = () => {
 							) : (
 								<PiTrash />
 							)}
-							Delete Selected
+							<p className={"md:block hidden"}>Delete Selected</p>
 						</Button>
 
 						<DropdownMenu>
