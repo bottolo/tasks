@@ -12812,3 +12812,11 @@ Processing by TasksController#show as */*
 Completed 200 OK in 2ms (Views: 0.2ms | ActiveRecord: 1.1ms (1 query, 0 cached) | GC: 0.0ms)
 
 
+Started GET "/tasks" for 127.0.0.1 at 2025-06-15 12:21:30 +0200
+  [1m[36mActiveRecord::SchemaMigration Load (20.4ms)[0m  [1m[34mSELECT "schema_migrations"."version" FROM "schema_migrations" ORDER BY "schema_migrations"."version" ASC /*application='Tasks'*/[0m
+Processing by TasksController#index as */*
+  [1m[36mTask Load (19.3ms)[0m  [1m[34mSELECT "tasks".* FROM "tasks" /*action='index',application='Tasks',controller='tasks'*/[0m
+  ↳ app/controllers/tasks_controller.rb:75:in 'TasksController#index'
+Completed 200 OK in 75ms (Views: 18.4ms | ActiveRecord: 42.6ms (1 query, 0 cached) | GC: 2.2ms)
+
+

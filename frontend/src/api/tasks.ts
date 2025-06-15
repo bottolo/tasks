@@ -9,8 +9,8 @@ export interface UseGetTasksParams {
 }
 
 // Trying to figure out why railway is not working with the environment variables.
-// const BASE_URL = "https://fiscotasks-production.up.railway.app";
-const BASE_URL = "http://localhost:3000";
+const BASE_URL = "https://fiscotasks-production.up.railway.app";
+// const BASE_URL = "http://localhost:3000";
 
 export const useGetTasks = (params?: UseGetTasksParams) => {
 	return useQuery<Task[]>({

@@ -14,8 +14,9 @@ import { Input } from "@/components/ui/input.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
 import { type CreateTask, type Task, createTaskSchema } from "@/types/task.ts";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeftIcon, Loader2Icon, SaveIcon } from "lucide-react";
+import { ArrowLeftIcon } from "lucide-react";
 import { useForm } from "react-hook-form";
+import { PiFloppyDisk, PiSpinner } from "react-icons/pi";
 import { useNavigate } from "react-router";
 
 export const CreateTaskRoute = () => {
@@ -48,6 +49,7 @@ export const CreateTaskRoute = () => {
 					variant="outline"
 					onClick={() => navigate(-1)}
 					className="flex items-center gap-2"
+					data-testid="return-button"
 				>
 					<ArrowLeftIcon className="h-4 w-4" />
 					Return
@@ -57,8 +59,13 @@ export const CreateTaskRoute = () => {
 					type="submit"
 					disabled={isCreating}
 					className="flex items-center gap-2"
+					data-testid="save-button"
 				>
-					{isCreating ? <Loader2Icon className="animate-spin" /> : <SaveIcon />}
+					{isCreating ? (
+						<PiSpinner className="animate-spin" />
+					) : (
+						<PiFloppyDisk />
+					)}
 					Save
 				</Button>
 			</div>
@@ -75,7 +82,12 @@ export const CreateTaskRoute = () => {
 							<FormItem>
 								<FormLabel>Title</FormLabel>
 								<FormControl>
-									<Input type="text" {...field} className="input" />
+									<Input
+										type="text"
+										{...field}
+										className="input"
+										data-testid="title-input"
+									/>
 								</FormControl>
 								<FormDescription>The title of the task.</FormDescription>
 								<FormMessage />
@@ -90,7 +102,12 @@ export const CreateTaskRoute = () => {
 							<FormItem>
 								<FormLabel>Description</FormLabel>
 								<FormControl>
-									<Textarea rows={3} {...field} className="input" />
+									<Textarea
+										rows={3}
+										{...field}
+										className="input"
+										data-testid="description-textarea"
+									/>
 								</FormControl>
 								<FormDescription>
 									A brief description of the task.
@@ -109,6 +126,7 @@ export const CreateTaskRoute = () => {
 									checked={field.value}
 									onCheckedChange={(checked) => field.onChange(checked)}
 									className="h-5 w-5"
+									data-testid="completed-checkbox"
 								/>
 								<FormLabel className="ml-2">Task Completed</FormLabel>
 							</FormItem>
