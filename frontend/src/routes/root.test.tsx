@@ -268,7 +268,6 @@ describe("RootRoute", () => {
 			</MemoryRouter>,
 		);
 
-		// Should show spinner
 		expect(screen.getByText("Spinner")).toBeInTheDocument();
 	});
 
