@@ -1,0 +1,66 @@
+meta {
+  name: Update Tasks
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{baseUrl}}/tasks
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "tasks": [
+      {
+        "id": 70,
+        "title": "Adding a simple task! www",
+        "description": "Desc",
+        "completed": false,
+        "created_at": "2025-06-14T14:31:37.969Z",
+        "updated_at": "2025-06-14T14:31:37.969Z"
+      },
+      {
+        "id": 71,
+        "title": "Adding a simple task! ww",
+        "description": "Desc",
+        "completed": false,
+        "created_at": "2025-06-14T14:31:37.969Z",
+        "updated_at": "2025-06-14T14:31:37.969Z"
+      },
+      {
+        "id": 72,
+        "title": "Adding a simple task! w",
+        "description": "Desc",
+        "completed": false,
+        "created_at": "2025-06-14T14:31:37.969Z",
+        "updated_at": "2025-06-14T14:31:37.969Z"
+      },
+      {
+        "id": 73,
+        "title": "Adding a simple task!",
+        "description": "Desc",
+        "completed": false,
+        "created_at": "2025-06-14T14:31:37.969Z",
+        "updated_at": "2025-06-14T14:31:37.969Z"
+      },
+      {
+        "id": 74,
+        "title": "Adding a simple task!",
+        "description": "Desc",
+        "completed": false,
+        "created_at": "2025-06-14T14:31:37.969Z",
+        "updated_at": "2025-06-14T14:31:37.969Z"
+      },
+      {
+        "id": 75,
+        "title": "Adding a simple task!",
+        "description": "Desc",
+        "completed": false,
+        "created_at": "2025-06-14T14:31:37.969Z",
+        "updated_at": "2025-06-14T14:31:37.969Z"
+      }
+    ]
+  }
+}

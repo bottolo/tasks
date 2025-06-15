@@ -459,12 +459,22 @@ export const RootRoute = () => {
 											"h-7 text-md gap-2 font-light hover:scale-101 transition-transform ease-in-out duration-200"
 										}
 									>
-										{task?.completed ? (
-											<PiCheckCircleFill className={"scale-125"} />
+										{isLoadingTasks && selectedTaskIds.has(task.id) ? (
+											<>
+												<PiSpinner className={"animate-spin"} />
+												Updating...
+											</>
+										) : task?.completed ? (
+											<>
+												<PiCheckCircleFill className={"scale-125"} />
+												Completed
+											</>
 										) : (
-											<PiSpinnerGap className={"scale-125 "} />
+											<>
+												<PiSpinnerGap className={"scale-125 "} />
+												In progress
+											</>
 										)}
-										{task?.completed ? "Completed" : "In progress"}
 									</Badge>
 								</div>
 							</Card>
